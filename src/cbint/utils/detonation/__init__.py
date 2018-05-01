@@ -20,6 +20,7 @@ from logging.handlers import RotatingFileHandler
 import datetime
 import socket
 import time
+import traceback
 
 try:
     import simplejson as json
@@ -369,6 +370,7 @@ class DetonationDaemon(CbIntegrationDaemon):
 
 
     def run(self):
+	collectors = []
         try:
             work_queue = self.initialize_queue()
             self.database_controller = BinaryDatabaseController(work_queue)
@@ -407,6 +409,7 @@ class DetonationDaemon(CbIntegrationDaemon):
                 feed_synchronizer.start()
         except Exception as e:
             log.error(e.message)
+	    log.error(traceback.format_exc(None))
 
         try:
             while True:

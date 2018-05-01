@@ -223,10 +223,13 @@ class SqliteQueue(object):
 
     def _get_conn(self):
         id = threading.current_thread().ident
+	log.info("_get_conn: current_thread = " + str(id))
         if id not in self._connection_cache:
+	    log.info("_get_conn = generating new id") 
             self._connection_cache[id] = sqlite3.Connection(self.path,
                                                             timeout=60)
             self._connection_cache[id].row_factory = sqlite3.Row
+	log.info("_get_conn = getting conn from cache!") 
         return self._connection_cache[id]
 
     def number_unanalyzed(self):
@@ -442,6 +445,7 @@ class SqliteFeedServer(threading.Thread):
         self.listener_address = listener_address
         self.link_base_url = link_base_url
         self.work_directory = work_directory
+	self._connection_cache = {}
 
         self.cert_file = cert_file
         self.key_file = key_file
@@ -523,9 +527,21 @@ class SqliteFeedServer(threading.Thread):
         binaries = cur.fetchall()
         return flask.render_template_string(binary_template, binaries=binaries, integration_name='test_feed')
 
+    @property
+    def conn(self):
+        id = threading.current_thread().ident
+	log.info("conn: current_thread = " + str(id))
+        if id not in self._connection_cache:
+	    log.info("conn = generating new id") 
+            self._connection_cache[id] = sqlite3.Connection(self.dbname,
+                                                            timeout=60)
+            self._connection_cache[id].row_factory = sqlite3.Row
+	log.info("conn = getting conn from cache!") 
+        return self._connection_cache[id]
+
     def run(self):
-        self.conn = sqlite3.Connection(self.dbname, timeout=60)
-        self.conn.row_factory = sqlite3.Row
+        #self.conn = sqlite3.Connection(self.dbname, timeout=60)
+        #self.conn.row_factory = sqlite3.Row
 
         try:
             if self.cert_file and self.key_file:
